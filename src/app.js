@@ -31,6 +31,7 @@ function createMessage() {
   const message = document.querySelector('#message').value;
   const username = document.querySelector('#nickname').value;
   const date = Timestamp.now();
+
   return { message, username, date };
   // ez is lehetne: return { message: message, username: username, date: date };
 }
@@ -47,6 +48,8 @@ async function displayAllMessages() {
 }
 
 function displayMessage(message) {
+  const msgDate = message.date.toDate().toLocaleString('hu-HU');
+
   const messageHTML = /*html*/ `
 
   <div class="message">
@@ -54,7 +57,7 @@ function displayMessage(message) {
             <div>
               <span class="username">
                 ${message.username}
-                <time>20:12 PM</time>
+                <time>${msgDate}</time>
               </span>
               <br />
               <span class="message-text">${message.message}</span>
@@ -63,7 +66,7 @@ function displayMessage(message) {
               <i class="fas fa-trash-alt"></i>
               <i class="fas fa-pen"></i>
             </div>
-          </div>
+    </div>
 
           `;
   document.querySelector('#messages').insertAdjacentHTML('beforeend', messageHTML);
@@ -77,6 +80,9 @@ function handleSubmit() {
   const message = createMessage();
   sendMessage(message);
   // displayMessage(message);  ez nem kell mert az onsnapshot használatával már lefut
+
+  // It was not a task in the homework, but I like better to clear message input box after sending (or hitting Enter):
+  document.querySelector('#message').value = '';
 }
 
 document.querySelector('#send').addEventListener('click', () => {
