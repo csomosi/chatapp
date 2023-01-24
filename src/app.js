@@ -9,7 +9,9 @@ import {
   query,
   orderBy,
   getDocs,
-  onSnapshot
+  onSnapshot,
+  deleteDoc,
+  doc
 } from 'firebase/firestore';
 import scrollIntoView from 'scroll-into-view-if-needed';
 
@@ -43,16 +45,16 @@ async function displayAllMessages() {
   const messages = await getDocs(q);
   document.querySelector('#messages').innerHTML = '';
   messages.forEach((doc) => {
-    displayMessage(doc.data());
+    displayMessage(doc.data(), doc.id);
   });
 }
 
-function displayMessage(message) {
+function displayMessage(message, msgId) {
   const msgDate = message.date.toDate().toLocaleString('hu-HU');
 
   const messageHTML = /*html*/ `
 
-  <div class="message">
+  <div class="message" data-id="${msgId}">
             <i class="fas fa-user"></i>
             <div>
               <span class="username">
@@ -74,11 +76,34 @@ function displayMessage(message) {
     scrollMode: 'if-needed',
     block: 'end'
   });
+
+  document
+    .querySelector(`[data-id="${msgId}"] .fa-trash-alt`)
+    .addEventListener('click', () => {
+      deleteMessage(msgId);
+      // removeMessage(msgId);
+    });
+}
+
+function removeMessage(msgId) {
+  // console.log('Message ', msgId, 'should be removed from UI');
+  document.querySelector(`[data-id="${msgId}"]`).remove();
+  console.log('Message ', msgId, ' was removed from UI');
+}
+
+async function deleteMessage(msgId) {
+  // console.log('Message ', msgId, 'should be deleted from db');
+  const docRef = doc(db, 'messages', msgId);
+  await deleteDoc(docRef);
+  console.log('Message ', msgId, ' was deleted from db');
+
+  // console.log('Message ', msgId, ' was deleted from db');
 }
 
 function handleSubmit() {
   const message = createMessage();
   sendMessage(message);
+  displayAllMessages();
   // displayMessage(message);  ez nem kell mert az onsnapshot használatával már lefut
 
   // It was not a task in the homework, but I like better to clear message input box after sending (or hitting Enter):
@@ -111,7 +136,6 @@ const q = query(collection(db, 'messages'), orderBy('date', 'asc'));
 onSnapshot(q, (snapshot) => {
   snapshot.docChanges().forEach((change) => {
     if (change.type === 'added') {
-      console.log('added');
       if (!initialLoad) {
         displayMessage(change.doc.data());
       }
@@ -120,7 +144,8 @@ onSnapshot(q, (snapshot) => {
       console.log('Modified');
     }
     if (change.type === 'removed') {
-      console.log('Removed');
+      // console.log('Removed');
+      removeMessage(change.doc.id);
     }
   });
   initialLoad = false;
